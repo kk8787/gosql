@@ -1,0 +1,4 @@
+root = "."
+tmp_dir = "tmp"
+include_ext = ["go"]
+exclude_dir = ["tmp", "vendor"]
