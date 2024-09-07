@@ -13,12 +13,20 @@ func TestParseJson(t *testing.T) {
 	// // asert
 	// assert.Equal(t, parsed, map[string]any{"name": "John", "age": 30, "city": "New York"})
 
-	json := `{"name": "John"}`
+	json := `{"name": "John", "city": "New York", "age": 30  }`
 	expected := []Token{
 		Token("{"),
 		Token("name"),
 		Token(":"),
 		Token("John"),
+		Token(","),
+		Token("city"),
+		Token(":"),
+		Token("New York"),
+		Token(","),
+		Token("age"),
+		Token(":"),
+		int64(30),
 		Token("}"),
 	}
 	parsed := lex(json)

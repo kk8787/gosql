@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
-type Token string
+type Token any
 
 const (
 	JSON_QUOTE rune = '"'
@@ -34,6 +35,44 @@ func lex_string(jsonString string) (Token, string) {
 	panic("unclosed string")
 }
 
+var NumberString = []rune{'-', 'e', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+
+func lex_number(jsonString string) (Token, string) {
+	tokenString := ""
+
+	for _, c := range jsonString {
+		if !strings.Contains(string(NumberString), string(c)) {
+			break
+		}
+
+		tokenString = tokenString + string(c)
+	}
+
+	rest := jsonString[len(tokenString):]
+
+	fmt.Println("tokenString", tokenString)
+
+	if tokenString == "" {
+		return "", jsonString
+	}
+
+	if strings.Contains(tokenString, ".") {
+		parsed, err := strconv.ParseFloat(tokenString, 64)
+		if err != nil {
+			panic(fmt.Sprintf("failed to parse float: '%s', '%s'", tokenString, jsonString))
+		}
+
+		return parsed, rest
+	}
+
+	parsed, err := strconv.ParseInt(tokenString, 10, 64)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse int: '%s', '%s'", tokenString, jsonString))
+	}
+
+	return parsed, rest
+}
+
 func lex(str string) []Token {
 	tokens := []Token{}
 
@@ -42,13 +81,21 @@ func lex(str string) []Token {
 		parsedString, _tmpStr := lex_string(tmpStr)
 		tmpStr = _tmpStr
 
-		char := rune(tmpStr[0])
-		fmt.Println("parsedString", parsedString)
-
 		if parsedString != "" {
 			tokens = append(tokens, parsedString)
 			continue
 		}
+
+		parsedNumber, _tmpStr := lex_number(tmpStr)
+		tmpStr = _tmpStr
+
+		if parsedNumber != "" {
+			tokens = append(tokens, parsedNumber)
+			continue
+		}
+
+		char := rune(tmpStr[0])
+		fmt.Println("parsedString", parsedString)
 
 		// ignore whitespace
 		if strings.Contains(string(WHITESPACE), string(char)) {
@@ -57,7 +104,7 @@ func lex(str string) []Token {
 		}
 
 		if strings.Contains(string(JSON_SYNTAX), string(char)) {
-			tokens = append(tokens, Token(string(char)))
+			tokens = append(tokens, string(char))
 			tmpStr = tmpStr[1:]
 			continue
 		}
@@ -68,7 +115,7 @@ func lex(str string) []Token {
 	return tokens
 }
 
-func parseJson(json string) any {
+func parseJson(json string) map[string]any {
 	// tokens := lex(json)
 
 	return map[string]any{}
